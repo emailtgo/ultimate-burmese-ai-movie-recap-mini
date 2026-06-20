@@ -145,11 +145,25 @@ if input_ready and keys_ready:
                     transcript = asyncio.run(ai_service.transcribe_audio_gemini(audio_path))
                     st.session_state.input_data["transcript"] = transcript
                 
-                # 3. Generate Script
-                status.update(label="✍️ Writing Movie Recap Script...")
-                source_text = st.session_state.input_data["transcript"] or "Manual input placeholder"
-                script = asyncio.run(ai_service.generate_movie_recap_script(source_text))
-                st.session_state.input_data["generated_script"] = script
+                # 3. Generate Script or Translate SRT
+                if st.session_state.input_data["input_type"] == "script_document" and \
+                   st.session_state.input_data["script_file"].name.lower().endswith(".srt"):
+                    
+                    status.update(label="🌐 Translating SRT to Burmese...")
+                    from engine.pro_dubbing_engine import ProDubbingEngine
+                    dub_engine = ProDubbingEngine(api_keys=all_gemini_keys, max_rpm=MAX_RPM_PER_KEY)
+                    
+                    # Read SRT content
+                    srt_content = st.session_state.input_data["script_file"].getvalue().decode("utf-8")
+                    
+                    # Translate using original engine logic
+                    translation_res = asyncio.run(dub_engine.translate_script(srt_content))
+                    st.session_state.input_data["generated_script"] = translation_res["reconstructed_srt_content"]
+                else:
+                    status.update(label="✍️ Writing Movie Recap Script...")
+                    source_text = st.session_state.input_data["transcript"] or "Manual input placeholder"
+                    script = asyncio.run(ai_service.generate_movie_recap_script(source_text))
+                    st.session_state.input_data["generated_script"] = script
                 
                 status.update(label="✅ Script Generation Completed!", state="complete", expanded=False)
             
