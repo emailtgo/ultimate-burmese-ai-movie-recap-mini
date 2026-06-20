@@ -11,10 +11,20 @@ def main():
     # Sidebar for Configuration
     with st.sidebar:
         st.header("⚙️ Configuration")
-        api_key = st.text_input("Gemini API Key:", type="password")
-        if api_key:
-            st.session_state.api_key = api_key
-            gemini = GeminiService(api_key)
+        
+        # Try to get API key from st.secrets first
+        api_key_from_secrets = st.secrets.get("GEMINI_API_KEY")
+        
+        if api_key_from_secrets:
+            st.success("✅ API Key loaded from Secrets")
+            st.session_state.api_key = api_key_from_secrets
+        else:
+            api_key = st.text_input("Gemini API Key:", type="password", help="Enter your Gemini API key if not set in Secrets")
+            if api_key:
+                st.session_state.api_key = api_key
+        
+        if "api_key" in st.session_state:
+            gemini = GeminiService(st.session_state.api_key)
             if st.button("Validate Key"):
                 if gemini.validate_key():
                     st.success("API Key is Valid!")
