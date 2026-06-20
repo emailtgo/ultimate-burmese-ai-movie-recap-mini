@@ -13,7 +13,7 @@ def render_phase2():
             st.rerun()
         return
 
-    gemini = GeminiService(st.session_state.api_key)
+    gemini = GeminiService(st.session_state.api_keys)
     input_data = st.session_state.input_data
 
     st.subheader("Step 1: Content Extraction")

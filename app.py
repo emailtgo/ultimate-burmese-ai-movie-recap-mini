@@ -12,29 +12,37 @@ def main():
     with st.sidebar:
         st.header("⚙️ Configuration")
         
-        # Try to get API key from st.secrets first
-        api_key_from_secrets = st.secrets.get("GEMINI_API_KEY")
-        
-        if api_key_from_secrets:
-            st.success("✅ API Key loaded from Secrets")
-            st.session_state.api_key = api_key_from_secrets
+        # Try to get API keys from st.secrets first
+        api_keys = []
+        secrets_keys = st.secrets.get("GEMINI_API_KEYS")
+        if secrets_keys:
+            if isinstance(secrets_keys, list):
+                api_keys = secrets_keys
+            else:
+                api_keys = [k.strip() for k in str(secrets_keys).split(",") if k.strip()]
+            st.success(f"✅ {len(api_keys)} Keys loaded from Secrets")
         else:
-            api_key = st.text_input("Gemini API Key:", type="password", help="Enter your Gemini API key if not set in Secrets")
-            if api_key:
-                st.session_state.api_key = api_key
+            keys_input = st.text_area("Gemini API Keys (one per line or comma-separated):", 
+                                    help="Enter multiple keys to enable auto-rotation and bypass RPM limits.")
+            if keys_input:
+                api_keys = [k.strip() for k in keys_input.replace("\n", ",").split(",") if k.strip()]
         
-        if "api_key" in st.session_state:
-            gemini = GeminiService(st.session_state.api_key)
-            if st.button("Validate Key"):
-                if gemini.validate_key():
-                    st.success("API Key is Valid!")
-                else:
-                    st.error("Invalid API Key.")
+        if api_keys:
+            st.session_state.api_keys = api_keys
+            gemini = GeminiService(api_keys)
+            if st.button("Validate & Rotate Keys"):
+                with st.spinner("Validating keys..."):
+                    import asyncio
+                    res = asyncio.run(gemini.validate_keys())
+                    if res["success"]:
+                        st.success(f"Validated {res['count']} / {len(api_keys)} Keys!")
+                    else:
+                        st.error("No valid API keys found.")
         else:
-            st.warning("Please enter Gemini API Key to proceed.")
+            st.warning("Please enter Gemini API Key(s) to proceed.")
 
-    if "api_key" not in st.session_state or not st.session_state.api_key:
-        st.info("👈 Please enter your Gemini API Key in the sidebar to start.")
+    if "api_keys" not in st.session_state or not st.session_state.api_keys:
+        st.info("👈 Please enter your Gemini API Key(s) in the sidebar to start.")
         return
 
     # Phase Navigation
