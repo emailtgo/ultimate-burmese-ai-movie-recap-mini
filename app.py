@@ -157,9 +157,9 @@ if input_ready and keys_ready:
                     srt_content = st.session_state.input_data["script_file"].getvalue().decode("utf-8")
                     
                     # Translate using original engine logic with parallel workers
-                    # Increased workers to leverage multiple keys (up to 20 workers for 17 keys)
-                    num_workers = min(20, len(all_gemini_keys) * 2) if len(all_gemini_keys) > 0 else 5
-                    translation_res = asyncio.run(dub_engine.translate_script(srt_content, num_workers=num_workers))
+                    # Use chunk_to_split to define parallel workers (e.g., 5 chunks = 5 workers)
+                    chunk_to_split = st.sidebar.slider("Chunk to Split", 1, 20, 5)
+                    translation_res = asyncio.run(dub_engine.translate_script(srt_content, chunk_to_split=chunk_to_split))
                     st.session_state.input_data["generated_script"] = translation_res["reconstructed_srt_content"]
                 else:
                     status.update(label="✍️ Writing Movie Recap Script...")
