@@ -11,12 +11,12 @@ from engine.tts_handler import TTSHandler
 from engine.audio_processor import AudioProcessor
 
 class ProDubbingEngine:
-    def __init__(self, api_keys: List[str], output_language: str = "my", voice_gender: str = "Male",
+    def __init__(self, api_keys: List[str], proxy_urls: List[str] = None, output_language: str = "my", voice_gender: str = "Male",
                  tolerance: float = 0.3, max_ai_retries: int = 50, max_rpm: int = 9, bitrate: str = "192k"):
         
         nest_asyncio.apply()
         self.parser = Parser()
-        self.translator = Translator(api_keys=api_keys, max_rpm=max_rpm)
+        self.translator = Translator(api_keys=api_keys, proxy_urls=proxy_urls, max_rpm=max_rpm)
         self.audio_processor = AudioProcessor(bitrate=bitrate)
         self.tts_handler = TTSHandler(output_language=output_language, voice_gender=voice_gender,
                                       tolerance=tolerance, max_ai_retries=max_ai_retries,

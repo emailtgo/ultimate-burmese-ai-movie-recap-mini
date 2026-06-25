@@ -78,7 +78,23 @@ with st.sidebar:
     all_gemini_keys = list(set(secrets_keys + st.session_state.api_keys["manual_keys"]))
     
     st.divider()
-    st.info(f"**🚀 Engine Active**\n- Max RPM: {MAX_RPM_PER_KEY}")
+    st.subheader("🌐 Proxy Settings")
+    use_tor = st.checkbox("Use Tor Proxy (17 Free IPs)", value=True)
+    proxy_input = st.text_area("Custom Proxy IPs (Optional, one per line)", height=100)
+    
+    all_proxies = []
+    if use_tor:
+        # Local Tor instances ports 9050-9066
+        all_proxies = [f"socks5://127.0.0.1:{9050+i}" for i in range(17)]
+    
+    if proxy_input:
+        custom_proxies = [p.strip() for p in proxy_input.split('\n') if p.strip()]
+        all_proxies.extend(custom_proxies)
+    
+    st.session_state.proxy_urls = all_proxies
+    
+    st.divider()
+    st.info(f"**🚀 Engine Active**\n- Max RPM: {MAX_RPM_PER_KEY}\n- Proxies: {len(all_proxies)}")
 
 # ============================================================================
 # MAIN CONTENT
@@ -151,7 +167,7 @@ if input_ready and keys_ready:
                     
                     status.update(label="🌐 Translating SRT to Burmese...")
                     from engine.pro_dubbing_engine import ProDubbingEngine
-                    dub_engine = ProDubbingEngine(api_keys=all_gemini_keys, max_rpm=MAX_RPM_PER_KEY)
+                    dub_engine = ProDubbingEngine(api_keys=all_gemini_keys, proxy_urls=st.session_state.get('proxy_urls', []), max_rpm=MAX_RPM_PER_KEY)
                     
                     # Read SRT content
                     srt_content = st.session_state.input_data["script_file"].getvalue().decode("utf-8")
